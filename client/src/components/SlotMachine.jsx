@@ -12,11 +12,20 @@ const BONUS_MESSAGES = {
   '🔥': 'SUPPLY BURNED',
 };
 
+const WEIGHTED_BONUS = [
+  '🔒', '🔒', '🔒', '🔒',
+  '🔥', '🔥', '🔥', '🔥',
+  '🤑', '🤑', '🤑',
+  '😳', '😳', '😳',
+  '🦅', '🦅',
+  '🚀',
+];
+
 function getRandomEmoji() {
   if (Math.random() < 0.82) {
     return FACE_EMOJIS[Math.floor(Math.random() * FACE_EMOJIS.length)];
   }
-  return BONUS_EMOJIS[Math.floor(Math.random() * BONUS_EMOJIS.length)];
+  return WEIGHTED_BONUS[Math.floor(Math.random() * WEIGHTED_BONUS.length)];
 }
 
 function generateReelSymbols() {
@@ -35,13 +44,34 @@ export default function SlotMachine() {
   const [frenzySpins, setFrenzySpins] = useState(0);
   const [lastWin, setLastWin] = useState(null);
   const [landedCells, setLandedCells] = useState([false, false, false]);
+  const [eagleDone, setEagleDone] = useState(false);
 
   const intervalsRef = useRef([null, null, null]);
   const frenzyRef = useRef({ mode: false, spins: 0 });
+  const eagleDoneRef = useRef(false);
 
   useEffect(() => {
     frenzyRef.current = { mode: frenzyMode, spins: frenzySpins };
   }, [frenzyMode, frenzySpins]);
+
+  useEffect(() => {
+    eagleDoneRef.current = eagleDone;
+  }, [eagleDone]);
+
+  useEffect(() => {
+    const handleEagleStatus = (data) => {
+      setEagleDone(data.triggered);
+    };
+    const handleEagleBlocked = () => {
+      setEagleDone(true);
+    };
+    socket.on('eagle-status', handleEagleStatus);
+    socket.on('eagle-blocked', handleEagleBlocked);
+    return () => {
+      socket.off('eagle-status', handleEagleStatus);
+      socket.off('eagle-blocked', handleEagleBlocked);
+    };
+  }, []);
 
 
   const processResults = useCallback(
@@ -71,15 +101,20 @@ export default function SlotMachine() {
       if (allThreeMatch && !isMatch) {
         const emoji = middleRow[0];
 
-        if (BONUS_MESSAGES[emoji]) {
-          socket.emit('bonus-trigger', { emoji, message: `${emoji} ${BONUS_MESSAGES[emoji]}` });
-        }
-
-        if (emoji === '🤑') {
+        if (emoji === '🔥') {
+          socket.emit('burn-trigger');
+        } else if (emoji === '🔒') {
+          socket.emit('lock-trigger');
+        } else if (emoji === '🚀') {
+          socket.emit('boost-trigger');
+        } else if (emoji === '🦅') {
+          if (!eagleDoneRef.current) {
+            socket.emit('eagle-trigger');
+            setEagleDone(true);
+          }
+        } else if (emoji === '🤑') {
           socket.emit('giveaway-trigger');
-        }
-
-        if (emoji === '😳') {
+        } else if (emoji === '😳') {
           setFrenzyMode(true);
           setFrenzySpins(7);
           socket.emit('frenzy-trigger');

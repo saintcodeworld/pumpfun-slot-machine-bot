@@ -23,6 +23,9 @@ try {
   console.warn('[Server] Solana init skipped — configure .env first:', err.message);
 }
 
+// ── Global state ──────────────────────────────────────────────
+let eagleTriggered = false;
+
 // ── REST health-check ──────────────────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 
@@ -71,6 +74,58 @@ io.on('connection', (socket) => {
       timestamp: Date.now(),
     });
   });
+
+  // Burn popup broadcast (🔥🔥🔥)
+  socket.on('burn-trigger', () => {
+    io.emit('bonus-popup', { type: 'burn', timestamp: Date.now() });
+    io.emit('live-feed', {
+      type: 'bonus',
+      emoji: '🔥',
+      message: '🔥 BURN TRIGGERED! Burning tokens in 3 minutes!',
+      timestamp: Date.now(),
+    });
+  });
+
+  // Lock popup broadcast (🔒🔒🔒)
+  socket.on('lock-trigger', () => {
+    io.emit('bonus-popup', { type: 'lock', timestamp: Date.now() });
+    io.emit('live-feed', {
+      type: 'bonus',
+      emoji: '🔒',
+      message: '🔒 LOCK TRIGGERED! Locking tokens in 3 minutes!',
+      timestamp: Date.now(),
+    });
+  });
+
+  // Boost popup broadcast (🚀🚀🚀) — rare
+  socket.on('boost-trigger', () => {
+    io.emit('bonus-popup', { type: 'boost', timestamp: Date.now() });
+    io.emit('live-feed', {
+      type: 'bonus',
+      emoji: '🚀',
+      message: '🚀 10x DEX BOOST! Paying 10x DEX Boost in 5 minutes!',
+      timestamp: Date.now(),
+    });
+  });
+
+  // Eagle popup broadcast (🦅🦅🦅) — one-time only
+  socket.on('eagle-trigger', () => {
+    if (eagleTriggered) {
+      socket.emit('eagle-blocked', { message: 'DEX pay has already been triggered.' });
+      return;
+    }
+    eagleTriggered = true;
+    io.emit('bonus-popup', { type: 'eagle', timestamp: Date.now() });
+    io.emit('live-feed', {
+      type: 'bonus',
+      emoji: '🦅',
+      message: '🦅 DEX PAY TRIGGERED! Paying DEX in 5 minutes!',
+      timestamp: Date.now(),
+    });
+  });
+
+  // Send eagle status to newly connected clients
+  socket.emit('eagle-status', { triggered: eagleTriggered });
 
   // Giveaway popup broadcast
   socket.on('giveaway-trigger', () => {

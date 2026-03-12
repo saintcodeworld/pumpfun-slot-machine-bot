@@ -4,11 +4,13 @@ import ChatSidebar from './components/ChatSidebar';
 import Legend from './components/Legend';
 import LiveFeed from './components/LiveFeed';
 import GiveawayPopup from './components/GiveawayPopup';
+import BonusPopup from './components/BonusPopup';
 import { socket } from './utils/socket';
 
 export default function App() {
   const [liveFeedItems, setLiveFeedItems] = useState([]);
   const [showGiveaway, setShowGiveaway] = useState(false);
+  const [activeBonusPopup, setActiveBonusPopup] = useState(null);
 
   const addFeedItem = useCallback((item) => {
     setLiveFeedItems((prev) => [item, ...prev].slice(0, 50));
@@ -20,13 +22,19 @@ export default function App() {
       setShowGiveaway(true);
       setTimeout(() => setShowGiveaway(false), 15000);
     };
+    const handleBonusPopup = (data) => {
+      setActiveBonusPopup(data.type);
+      setTimeout(() => setActiveBonusPopup(null), 15000);
+    };
 
     socket.on('live-feed', handleLiveFeed);
     socket.on('giveaway-popup', handleGiveaway);
+    socket.on('bonus-popup', handleBonusPopup);
 
     return () => {
       socket.off('live-feed', handleLiveFeed);
       socket.off('giveaway-popup', handleGiveaway);
+      socket.off('bonus-popup', handleBonusPopup);
     };
   }, [addFeedItem]);
 
@@ -55,6 +63,10 @@ export default function App() {
       {/* ── Giveaway Popup (global overlay) ── */}
       {showGiveaway && (
         <GiveawayPopup onClose={() => setShowGiveaway(false)} />
+      )}
+
+      {activeBonusPopup && (
+        <BonusPopup type={activeBonusPopup} onClose={() => setActiveBonusPopup(null)} />
       )}
     </div>
   );
