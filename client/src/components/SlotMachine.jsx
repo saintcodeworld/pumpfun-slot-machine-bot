@@ -64,11 +64,12 @@ export default function SlotMachine() {
         setLastWin(null);
       }
 
-      // Check each middle-row cell for bonus emojis
-      const seen = new Set();
-      middleRow.forEach((emoji) => {
-        if (seen.has(emoji)) return;
-        seen.add(emoji);
+      // 3 matching bonus emojis on middle row → trigger bonus effect
+      const allThreeMatch =
+        middleRow[0] === middleRow[1] && middleRow[1] === middleRow[2];
+
+      if (allThreeMatch && !isMatch) {
+        const emoji = middleRow[0];
 
         if (BONUS_MESSAGES[emoji]) {
           socket.emit('bonus-trigger', { emoji, message: `${emoji} ${BONUS_MESSAGES[emoji]}` });
@@ -83,7 +84,7 @@ export default function SlotMachine() {
           setFrenzySpins(7);
           socket.emit('frenzy-trigger');
         }
-      });
+      }
 
       // Decrement frenzy counter
       if (isFrenzyActive && currentSpins > 0) {
