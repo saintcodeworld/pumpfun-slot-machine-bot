@@ -44,7 +44,7 @@ export default function App() {
 
       {/* ── Center: Slot Machine ── */}
       <main className="flex-1 flex items-center justify-center min-w-0 p-4">
-        <SlotMachine onFeedItem={addFeedItem} />
+        <SlotMachine />
       </main>
 
       {/* ── Right Sidebar: Chat ── */}

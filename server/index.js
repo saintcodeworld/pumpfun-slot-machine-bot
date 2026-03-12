@@ -32,29 +32,32 @@ io.on('connection', (socket) => {
 
   // Dev-buy request from the slot machine
   socket.on('dev-buy', async (data) => {
+    const isFrenzy = data?.frenzy === true;
+    const solAmount = isFrenzy ? 0.2 : 0.1;
+    const emojis = data?.emojis || '🎰🎰🎰';
+    console.log(`[WS] Dev-buy requested: ${solAmount} SOL (frenzy=${isFrenzy})`);
+
+    // Broadcast the win to ALL clients immediately
+    io.emit('live-feed', {
+      type: 'dev-buy',
+      message: `🎰 WIN! ${emojis} → Dev Buy ${solAmount} SOL${isFrenzy ? ' (FRENZY x2!)' : ''}`,
+      timestamp: Date.now(),
+    });
+
     try {
-      const isFrenzy = data?.frenzy === true;
-      const solAmount = isFrenzy ? 0.2 : 0.1;
-      console.log(`[WS] Dev-buy requested: ${solAmount} SOL (frenzy=${isFrenzy})`);
-
       const result = await executePumpFunBuy(solAmount);
-
-      socket.emit('dev-buy-result', {
-        success: true,
-        signature: result.signature,
-        amount: solAmount,
-      });
 
       io.emit('live-feed', {
         type: 'dev-buy',
-        message: `✅ Dev Buy ${solAmount} SOL — ${result.signature.slice(0, 8)}…`,
+        message: `✅ TX confirmed: ${result.signature.slice(0, 12)}…`,
         timestamp: Date.now(),
       });
     } catch (error) {
       console.error('[WS] Dev-buy failed:', error.message);
-      socket.emit('dev-buy-result', {
-        success: false,
-        error: error.message,
+      io.emit('live-feed', {
+        type: 'dev-buy',
+        message: `❌ TX failed: ${error.message}`,
+        timestamp: Date.now(),
       });
     }
   });
@@ -72,6 +75,22 @@ io.on('connection', (socket) => {
   // Giveaway popup broadcast
   socket.on('giveaway-trigger', () => {
     io.emit('giveaway-popup', { timestamp: Date.now() });
+    io.emit('live-feed', {
+      type: 'giveaway',
+      emoji: '🤑',
+      message: '🤑 GIVEAWAY TRIGGERED! Drop your wallet in chat!',
+      timestamp: Date.now(),
+    });
+  });
+
+  // Frenzy mode broadcast
+  socket.on('frenzy-trigger', () => {
+    io.emit('live-feed', {
+      type: 'frenzy',
+      emoji: '😳',
+      message: '😳 FRENZY MODE ACTIVATED! x2 rewards for 7 spins!',
+      timestamp: Date.now(),
+    });
   });
 
   // Chat relay (supplements Supabase persistence)

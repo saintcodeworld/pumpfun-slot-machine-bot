@@ -23,7 +23,7 @@ function generateReelSymbols() {
   return [getRandomEmoji(), getRandomEmoji(), getRandomEmoji()];
 }
 
-export default function SlotMachine({ onFeedItem }) {
+export default function SlotMachine() {
   const [reels, setReels] = useState(() => [
     generateReelSymbols(),
     generateReelSymbols(),
@@ -43,26 +43,6 @@ export default function SlotMachine({ onFeedItem }) {
     frenzyRef.current = { mode: frenzyMode, spins: frenzySpins };
   }, [frenzyMode, frenzySpins]);
 
-  // Listen for transaction results from server
-  useEffect(() => {
-    const handleResult = (data) => {
-      if (data.success) {
-        onFeedItem({
-          type: 'dev-buy',
-          message: `✅ TX confirmed: ${data.signature.slice(0, 12)}…`,
-          timestamp: Date.now(),
-        });
-      } else {
-        onFeedItem({
-          type: 'dev-buy',
-          message: `❌ TX failed: ${data.error}`,
-          timestamp: Date.now(),
-        });
-      }
-    };
-    socket.on('dev-buy-result', handleResult);
-    return () => socket.off('dev-buy-result', handleResult);
-  }, [onFeedItem]);
 
   const processResults = useCallback(
     (finalReels) => {
@@ -79,12 +59,7 @@ export default function SlotMachine({ onFeedItem }) {
         const isFrenzy = isFrenzyActive && currentSpins > 0;
         const amount = isFrenzy ? 0.2 : 0.1;
         setLastWin({ emoji: middleRow[0], amount });
-        socket.emit('dev-buy', { frenzy: isFrenzy });
-        onFeedItem({
-          type: 'dev-buy',
-          message: `🎰 WIN! ${middleRow.join('')} → Dev Buy ${amount} SOL${isFrenzy ? ' (FRENZY x2!)' : ''}`,
-          timestamp: Date.now(),
-        });
+        socket.emit('dev-buy', { frenzy: isFrenzy, emojis: middleRow.join('') });
       } else {
         setLastWin(null);
       }
@@ -96,34 +71,17 @@ export default function SlotMachine({ onFeedItem }) {
         seen.add(emoji);
 
         if (BONUS_MESSAGES[emoji]) {
-          onFeedItem({
-            type: 'bonus',
-            emoji,
-            message: `${emoji} ${BONUS_MESSAGES[emoji]}`,
-            timestamp: Date.now(),
-          });
           socket.emit('bonus-trigger', { emoji, message: `${emoji} ${BONUS_MESSAGES[emoji]}` });
         }
 
         if (emoji === '🤑') {
           socket.emit('giveaway-trigger');
-          onFeedItem({
-            type: 'giveaway',
-            emoji: '🤑',
-            message: '🤑 GIVEAWAY TRIGGERED! Drop your wallet in chat!',
-            timestamp: Date.now(),
-          });
         }
 
         if (emoji === '😳') {
           setFrenzyMode(true);
           setFrenzySpins(7);
-          onFeedItem({
-            type: 'frenzy',
-            emoji: '😳',
-            message: '😳 FRENZY MODE ACTIVATED! x2 rewards for 7 spins!',
-            timestamp: Date.now(),
-          });
+          socket.emit('frenzy-trigger');
         }
       });
 
@@ -136,7 +94,7 @@ export default function SlotMachine({ onFeedItem }) {
 
       setSpinning(false);
     },
-    [onFeedItem],
+    [],
   );
 
   const spin = useCallback(() => {
