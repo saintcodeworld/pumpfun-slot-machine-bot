@@ -3,10 +3,10 @@ import { socket } from '../utils/socket';
 import Lever from './Lever';
 
 const FACE_EMOJIS = ['😀', '😎', '🤩', '😍', '🥳', '😂', '🤪', '😇'];
-const BONUS_EMOJIS = ['🦅', '🚀', '🔒', '🔥', '🤑', '😳'];
+const BONUS_EMOJIS = ['eagle', '🚀', '🔒', '🔥', '🤑', '😳'];
 
 const BONUS_MESSAGES = {
-  '🦅': 'DEX PAID',
+  'eagle': 'DEX PAID',
   '🚀': 'DEX BOOSTED',
   '🔒': 'SUPPLY LOCKED',
   '🔥': 'SUPPLY BURNED',
@@ -17,7 +17,7 @@ const WEIGHTED_BONUS = [
   '🔥', '🔥', '🔥', '🔥',
   '🤑', '🤑', '🤑',
   '😳', '😳', '😳',
-  '🦅', '🦅',
+  'eagle', 'eagle',
   '🚀',
 ];
 
@@ -107,7 +107,7 @@ export default function SlotMachine() {
           socket.emit('lock-trigger');
         } else if (emoji === '🚀') {
           socket.emit('boost-trigger');
-        } else if (emoji === '🦅') {
+        } else if (emoji === 'eagle') {
           if (!eagleDoneRef.current) {
             socket.emit('eagle-trigger');
             setEagleDone(true);
@@ -284,7 +284,11 @@ export default function SlotMachine() {
                             isWinCell ? 'win-glow' : '',
                           ].join(' ')}
                         >
-                          {symbol}
+                          {symbol === 'eagle' ? (
+                            <img src="/dexscreener.png" alt="eagle" className="w-[3.2rem] h-[3.2rem] object-contain" />
+                          ) : (
+                            symbol
+                          )}
                         </div>
                       );
                     })}

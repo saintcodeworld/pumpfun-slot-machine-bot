@@ -45,7 +45,7 @@ const POPUP_CONFIG = {
     btnShadow: 'hover:shadow-purple-500/30',
   },
   eagle: {
-    emoji: '🦅',
+    emoji: 'eagle',
     title: 'DEX PAID!',
     message: 'Someone hit the DEX pay!',
     detail: 'Paying DEX in 5 minutes!',
@@ -68,7 +68,13 @@ export default function BonusPopup({ type, onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
       <div className={`pop-in bg-gradient-to-b from-gray-800 to-gray-900 border-2 ${config.borderColor} rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl ${config.shadowColor}`}>
-        <div className="text-7xl mb-4">{config.emoji}</div>
+        <div className="text-7xl mb-4">
+          {config.emoji === 'eagle' ? (
+            <img src="/dexscreener.png" alt="eagle" className="w-20 h-20 object-contain inline-block" />
+          ) : (
+            config.emoji
+          )}
+        </div>
         <h2 className={`text-2xl font-extrabold ${config.titleColor} mb-2`}>{config.title}</h2>
         <p className="text-gray-300 mb-6 leading-relaxed">
           {config.message}

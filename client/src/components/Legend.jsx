@@ -7,7 +7,7 @@ export default function Legend() {
       color: 'text-green-400',
     },
     {
-      emoji: '🦅',
+      emoji: 'eagle',
       label: 'Eagle — DEX PAID',
       desc: 'Announces DEX has been paid',
       color: 'text-yellow-400',
@@ -58,7 +58,11 @@ export default function Legend() {
             className="flex items-start gap-2.5 p-2 rounded-lg bg-gray-800/30 hover:bg-gray-800/60 transition-colors"
           >
             <div className="text-2xl flex-shrink-0 w-9 text-center leading-none pt-0.5">
-              {item.emoji}
+              {item.emoji === 'eagle' ? (
+                <img src="/dexscreener.png" alt="eagle" className="w-7 h-7 object-contain inline-block" />
+              ) : (
+                item.emoji
+              )}
             </div>
             <div className="min-w-0">
               <div className={`text-xs font-semibold ${item.color}`}>{item.label}</div>
