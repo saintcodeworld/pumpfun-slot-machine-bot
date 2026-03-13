@@ -1,6 +1,6 @@
-# Pump.fun Slot Machine — Dev Buy Bot
+# Betmoji Slot Machine — Dev Buy Bot
 
-A gamified web-based Slot Machine for Solana token launches on pump.fun.  
+A gamified web-based Slot Machine for Solana token launches on Betmoji.  
 Triggers automated **0.1 SOL Dev Buys** when matching emoji combos land on the middle row.
 
 ## Tech Stack
@@ -8,7 +8,7 @@ Triggers automated **0.1 SOL Dev Buys** when matching emoji combos land on the m
 - **Frontend:** React + Vite + Tailwind CSS
 - **Backend:** Node.js + Express + Socket.IO
 - **Database/Realtime:** Supabase (chat persistence + real-time)
-- **Blockchain:** @solana/web3.js (pump.fun bonding curve buy)
+- **Blockchain:** @solana/web3.js (Betmoji bonding curve buy)
 
 ## Setup
 
@@ -22,7 +22,7 @@ npm install
 Edit `server/.env` with your keys:
 
 ```
-TOKEN_MINT_ADDRESS=<your_pump_fun_token_mint>
+TOKEN_MINT_ADDRESS=<your_betmoji_token_mint>
 DEV_PRIVATE_KEY=<base58_encoded_private_key>
 RPC_URL=https://api.mainnet-beta.solana.com
 ```
@@ -59,7 +59,7 @@ Open [http://localhost:5173](http://localhost:5173).
 
 1. Pull the lever to spin the 3×3 slot machine.
 2. **Middle row** is the payline (marked by arrows).
-3. **3 matching face emojis** → triggers a 0.1 SOL Dev Buy on pump.fun.
+3. **3 matching face emojis** → triggers a 0.1 SOL Dev Buy on Betmoji.
 4. **Bonus emojis** trigger special effects (see Legend in-app).
 5. **😳 Frenzy Mode** doubles rewards for the next 7 spins.
 6. **🤑 Giveaway** shows a global popup asking users to drop wallets in chat.

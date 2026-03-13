@@ -40,7 +40,13 @@ io.on('connection', (socket) => {
     const emojis = data?.emojis || '🎰🎰🎰';
     console.log(`[WS] Dev-buy requested: ${solAmount} SOL (frenzy=${isFrenzy})`);
 
-    // Broadcast the win to ALL clients immediately
+    // Broadcast the win popup + live feed to ALL clients immediately
+    io.emit('dev-buy-popup', {
+      emojis,
+      amount: solAmount,
+      frenzy: isFrenzy,
+      timestamp: Date.now(),
+    });
     io.emit('live-feed', {
       type: 'dev-buy',
       message: `🎰 WIN! ${emojis} → Dev Buy ${solAmount} SOL${isFrenzy ? ' (FRENZY x2!)' : ''}`,
@@ -48,11 +54,13 @@ io.on('connection', (socket) => {
     });
 
     try {
+      console.log(`[WS] Executing PumpFun buy for ${solAmount} SOL...`);
       const result = await executePumpFunBuy(solAmount);
 
       io.emit('live-feed', {
         type: 'dev-buy',
         message: `✅ TX confirmed: ${result.signature.slice(0, 12)}…`,
+        signature: result.signature,
         timestamp: Date.now(),
       });
     } catch (error) {

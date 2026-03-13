@@ -26,7 +26,22 @@ export default function LiveFeed({ items }) {
               key={i}
               className={`text-xs p-2 rounded-lg border ${style} ${i === 0 ? 'feed-enter' : ''}`}
             >
-              <div className="font-medium leading-snug">{item.message}</div>
+              <div className="font-medium leading-snug">
+                {item.message}
+                {item.signature && (
+                  <>
+                    {' '}
+                    <a
+                      href={`https://solscan.io/tx/${item.signature}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-white transition-colors"
+                    >
+                      [Solscan]
+                    </a>
+                  </>
+                )}
+              </div>
               <div className="text-[10px] text-gray-600 mt-0.5">
                 {new Date(item.timestamp).toLocaleTimeString()}
               </div>

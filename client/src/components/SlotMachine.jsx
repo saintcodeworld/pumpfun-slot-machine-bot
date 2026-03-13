@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { socket } from '../utils/socket';
 import Lever from './Lever';
 
-const FACE_EMOJIS = ['😀', '😎', '🤩', '😍', '🥳', '😂', '🤪', '😇'];
+const FACE_EMOJIS = ['😀', '😎', '🤩', '😍'];
 const BONUS_EMOJIS = ['eagle', '🚀', '🔒', '🔥', '🤑', '😳'];
 
 const BONUS_MESSAGES = {
@@ -12,17 +12,10 @@ const BONUS_MESSAGES = {
   '🔥': 'SUPPLY BURNED',
 };
 
-const WEIGHTED_BONUS = [
-  '🔒', '🔒', '🔒', '🔒',
-  '🔥', '🔥', '🔥', '🔥',
-  '🤑', '🤑', '🤑',
-  '😳', '😳', '😳',
-  'eagle', 'eagle',
-  '🚀',
-];
+const WEIGHTED_BONUS = ['eagle', '🚀', '🔒', '🔥', '🤑', '😳'];
 
 function getRandomEmoji() {
-  if (Math.random() < 0.82) {
+  if (Math.random() < 0.60) {
     return FACE_EMOJIS[Math.floor(Math.random() * FACE_EMOJIS.length)];
   }
   return WEIGHTED_BONUS[Math.floor(Math.random() * WEIGHTED_BONUS.length)];
@@ -32,7 +25,28 @@ function generateReelSymbols() {
   return [getRandomEmoji(), getRandomEmoji(), getRandomEmoji()];
 }
 
-export default function SlotMachine() {
+function generateFinalReels() {
+  const reels = [generateReelSymbols(), generateReelSymbols(), generateReelSymbols()];
+
+  // ~12% chance to force a face match on the middle row
+  if (Math.random() < 0.12) {
+    const faceEmoji = FACE_EMOJIS[Math.floor(Math.random() * FACE_EMOJIS.length)];
+    reels[0][1] = faceEmoji;
+    reels[1][1] = faceEmoji;
+    reels[2][1] = faceEmoji;
+  }
+  // ~5% chance to force a bonus match on the middle row
+  else if (Math.random() < 0.05) {
+    const bonusEmoji = WEIGHTED_BONUS[Math.floor(Math.random() * WEIGHTED_BONUS.length)];
+    reels[0][1] = bonusEmoji;
+    reels[1][1] = bonusEmoji;
+    reels[2][1] = bonusEmoji;
+  }
+
+  return reels;
+}
+
+export default function SlotMachine({ onResult }) {
   const [reels, setReels] = useState(() => [
     generateReelSymbols(),
     generateReelSymbols(),
@@ -47,6 +61,8 @@ export default function SlotMachine() {
   const [eagleDone, setEagleDone] = useState(false);
 
   const intervalsRef = useRef([null, null, null]);
+  const stopTimeoutsRef = useRef([null, null, null]);
+  const spinningRef = useRef(false);
   const frenzyRef = useRef({ mode: false, spins: 0 });
   const eagleDoneRef = useRef(false);
 
@@ -73,16 +89,33 @@ export default function SlotMachine() {
     };
   }, []);
 
+  // Cleanup all intervals and timeouts on unmount
+  useEffect(() => {
+    return () => {
+      for (let i = 0; i < 3; i++) {
+        if (intervalsRef.current[i]) clearInterval(intervalsRef.current[i]);
+        if (stopTimeoutsRef.current[i]) clearTimeout(stopTimeoutsRef.current[i]);
+      }
+    };
+  }, []);
+
+  const onResultRef = useRef(onResult);
+  useEffect(() => {
+    onResultRef.current = onResult;
+  }, [onResult]);
 
   const processResults = useCallback(
     (finalReels) => {
       const middleRow = [finalReels[0][1], finalReels[1][1], finalReels[2][1]];
       const { mode: isFrenzyActive, spins: currentSpins } = frenzyRef.current;
 
+      // Check for ANY three-of-a-kind on middle row
+      const allThreeMatch =
+        middleRow[0] === middleRow[1] && middleRow[1] === middleRow[2];
+
       // 3 matching face emojis on middle row → dev buy
       const isMatch =
-        middleRow[0] === middleRow[1] &&
-        middleRow[1] === middleRow[2] &&
+        allThreeMatch &&
         FACE_EMOJIS.includes(middleRow[0]);
 
       if (isMatch) {
@@ -90,30 +123,35 @@ export default function SlotMachine() {
         const amount = isFrenzy ? 0.2 : 0.1;
         setLastWin({ emoji: middleRow[0], amount });
         socket.emit('dev-buy', { frenzy: isFrenzy, emojis: middleRow.join('') });
+        // Notify parent directly for popup (no server roundtrip needed)
+        if (onResultRef.current) {
+          onResultRef.current({ type: 'dev-buy', emojis: middleRow.join(''), amount, frenzy: isFrenzy });
+        }
       } else {
         setLastWin(null);
       }
 
       // 3 matching bonus emojis on middle row → trigger bonus effect
-      const allThreeMatch =
-        middleRow[0] === middleRow[1] && middleRow[1] === middleRow[2];
-
       if (allThreeMatch && !isMatch) {
         const emoji = middleRow[0];
-
         if (emoji === '🔥') {
           socket.emit('burn-trigger');
+          if (onResultRef.current) onResultRef.current({ type: 'bonus', bonusType: 'burn' });
         } else if (emoji === '🔒') {
           socket.emit('lock-trigger');
+          if (onResultRef.current) onResultRef.current({ type: 'bonus', bonusType: 'lock' });
         } else if (emoji === '🚀') {
           socket.emit('boost-trigger');
+          if (onResultRef.current) onResultRef.current({ type: 'bonus', bonusType: 'boost' });
         } else if (emoji === 'eagle') {
           if (!eagleDoneRef.current) {
             socket.emit('eagle-trigger');
             setEagleDone(true);
+            if (onResultRef.current) onResultRef.current({ type: 'bonus', bonusType: 'eagle' });
           }
         } else if (emoji === '🤑') {
           socket.emit('giveaway-trigger');
+          if (onResultRef.current) onResultRef.current({ type: 'giveaway' });
         } else if (emoji === '😳') {
           setFrenzyMode(true);
           setFrenzySpins(7);
@@ -129,19 +167,33 @@ export default function SlotMachine() {
       }
 
       setSpinning(false);
+      spinningRef.current = false;
     },
     [],
   );
 
   const spin = useCallback(() => {
-    if (spinning) return;
+    if (spinningRef.current) return;
+
+    // Clear any leaked intervals and pending timeouts from previous spins
+    for (let i = 0; i < 3; i++) {
+      if (intervalsRef.current[i]) {
+        clearInterval(intervalsRef.current[i]);
+        intervalsRef.current[i] = null;
+      }
+      if (stopTimeoutsRef.current[i]) {
+        clearTimeout(stopTimeoutsRef.current[i]);
+        stopTimeoutsRef.current[i] = null;
+      }
+    }
 
     setLastWin(null);
     setSpinning(true);
+    spinningRef.current = true;
     setLandedCells([false, false, false]);
     setReelStates([true, true, true]);
 
-    const finalReels = [generateReelSymbols(), generateReelSymbols(), generateReelSymbols()];
+    const finalReels = generateFinalReels();
 
     // Start rapid emoji cycling per reel
     for (let i = 0; i < 3; i++) {
@@ -157,9 +209,10 @@ export default function SlotMachine() {
     // Stop reels left → middle → right
     const stopDelays = [1000, 1700, 2400];
     stopDelays.forEach((delay, i) => {
-      setTimeout(() => {
+      stopTimeoutsRef.current[i] = setTimeout(() => {
         clearInterval(intervalsRef.current[i]);
         intervalsRef.current[i] = null;
+        stopTimeoutsRef.current[i] = null;
 
         setReels((prev) => {
           const next = [...prev];
@@ -185,7 +238,7 @@ export default function SlotMachine() {
         }
       }, delay);
     });
-  }, [spinning, processResults]);
+  }, [processResults]);
 
   const LED_COLORS = ['#4ade80', '#ef4444', '#facc15'];
 
@@ -203,7 +256,7 @@ export default function SlotMachine() {
           <div className="relative z-10 flex items-center justify-center gap-3 mb-1.5">
             <img
               src="/pumpfunlogo.png"
-              alt="pump.fun"
+              alt="Betmoji"
               className="w-10 h-10 drop-shadow-lg"
               style={{ filter: 'drop-shadow(0 0 8px rgba(74,222,128,0.4))' }}
             />
@@ -216,7 +269,7 @@ export default function SlotMachine() {
                 filter: 'drop-shadow(0 0 8px rgba(74,222,128,0.5))',
               }}
             >
-              pump.fun
+              Betmoji
             </span>
           </div>
           <div
