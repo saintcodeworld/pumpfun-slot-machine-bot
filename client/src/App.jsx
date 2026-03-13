@@ -5,9 +5,14 @@ import Legend from './components/Legend';
 import LiveFeed from './components/LiveFeed';
 import GiveawayPopup from './components/GiveawayPopup';
 import BonusPopup from './components/BonusPopup';
+import LaunchingSoon from './components/LaunchingSoon';
 import { socket } from './utils/socket';
 
+// ⚡ TEMPORARY: Set to false when ready to go live
+const LAUNCHING_SOON = true;
+
 export default function App() {
+  if (LAUNCHING_SOON) return <LaunchingSoon />;
   const [liveFeedItems, setLiveFeedItems] = useState([]);
   const [showGiveaway, setShowGiveaway] = useState(false);
   const [activeBonusPopup, setActiveBonusPopup] = useState(null);
