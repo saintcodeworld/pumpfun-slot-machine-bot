@@ -9,7 +9,7 @@ import LaunchingSoon from './components/LaunchingSoon';
 import { socket } from './utils/socket';
 
 // ⚡ TEMPORARY: Set to false when ready to go live
-const LAUNCHING_SOON = true;
+const LAUNCHING_SOON = false;
 
 export default function App() {
   if (LAUNCHING_SOON) return <LaunchingSoon />;
