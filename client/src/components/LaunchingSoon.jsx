@@ -100,7 +100,18 @@ export default function LaunchingSoon() {
         </div>
 
         {/* Social / links placeholder */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 flex-wrap justify-center">
+          <a
+            href="https://x.com/betmojidotfun"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500/10 to-sky-500/10 border border-blue-500/30 rounded-xl text-blue-400 font-semibold text-sm hover:border-blue-400/60 hover:bg-blue-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10"
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+            Follow on X
+          </a>
           <a
             href="https://pump.fun"
             target="_blank"

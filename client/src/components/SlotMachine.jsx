@@ -391,6 +391,19 @@ export default function SlotMachine({ onResult }) {
           </div>
         </div>
       </div>
+
+      {/* ══ SOCIAL LINK ════════════════════════════════ */}
+      <a
+        href="https://x.com/betmojidotfun"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-5 flex items-center gap-2 px-5 py-2 bg-gray-900/80 border border-gray-700/50 rounded-xl text-gray-300 font-semibold text-sm hover:border-blue-400/50 hover:text-blue-400 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/10"
+      >
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+        @betmojidotfun
+      </a>
     </div>
   );
 }
